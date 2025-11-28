@@ -1,290 +1,138 @@
-Welcome to your new TanStack app! 
-
-# Getting Started
-
-To run this application:
-
+# Tanstack Start + Drizzle + Shadcn Template
+これは、Tanstack Start、Drizzle ORM、およびShadcn UIコンポーネントライブラリを組み合わせたテンプレートプロジェクトです。このテンプレートは、モダンなフルスタックWebアプリケーションの開発を迅速に開始するための基盤を提供します。
+## 特徴
+- **Tanstack Start**: 高性能なデータフェッチングと状態管理を提供するTanstack Startを使用しています。
+- **Drizzle ORM**: 型安全で使いやすいORMであるDrizzleを採用し、データベース操作を簡素化します。
+- **Shadcn UI**: 美しいUIコンポーネントライブラリであるShadcnを利用して、迅速に魅力的なユーザーインターフェースを構築します。
+- **tsgo**: 型チェックには[tsgo](https://github.com/microsoft/typescript-go)を採用。従来のtscと比較して約10倍高速です。
+- **Biome**: リンターとフォーマッターとして[Biome](https://biomejs.dev/)を採用。ESLint + Prettierの代替として高速に動作します。
+## セットアップ手順
+1. リポジトリをクローンします。
+```bash
+git clone git@github.com:Stella2211/tanstack-start-drizzle-shadcn-template-c3.git
+cd tanstack-start-drizzle-shadcn-template-c3
+```
+2. 依存関係をインストールします。
 ```bash
 bun install
-bun --bun run start
 ```
 
-# Building For Production
+3. ローカルD1データベースをセットアップします。
+```bash
+bun run db:migrate:local
+```
 
-To build this application for production:
+4. 開発サーバーを起動します。
+```bash
+bun run dev
+```
+
+## データベースセットアップ (Cloudflare D1 + Drizzle ORM)
+
+このテンプレートはCloudflare D1をデータベースとして使用し、Drizzle ORMで操作します。
+
+### ローカル開発
+
+ローカル開発では、Wranglerが自動的にローカルD1インスタンスを作成します。
 
 ```bash
-bun --bun run build
+# マイグレーションをローカルD1に適用
+bun run db:migrate:local
+
+# 開発サーバー起動
+bun run dev
 ```
 
-## Testing
+### スキーマの変更
 
-This project uses [Vitest](https://vitest.dev/) for testing. You can run the tests with:
-
+1. `src/db/schema.ts` でスキーマを編集
+2. マイグレーションを生成:
 ```bash
-bun --bun run test
+bun run db:generate
+```
+3. マイグレーションを適用:
+```bash
+bun run db:migrate:local
 ```
 
-## Styling
+### 本番環境へのデプロイ
 
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
-
-
-
-
-## Routing
-This project uses [TanStack Router](https://tanstack.com/router). The initial setup is a file based router. Which means that the routes are managed as files in `src/routes`.
-
-### Adding A Route
-
-To add a new route to your application just add another a new file in the `./src/routes` directory.
-
-TanStack will automatically generate the content of the route file for you.
-
-Now that you have two routes you can use a `Link` component to navigate between them.
-
-### Adding Links
-
-To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
-
-```tsx
-import { Link } from "@tanstack/react-router";
+1. Cloudflare D1データベースを作成:
+```bash
+wrangler d1 create tanstack-start-db
 ```
 
-Then anywhere in your JSX you can use it like so:
-
-```tsx
-<Link to="/about">About</Link>
+2. 出力された`database_id`を`wrangler.jsonc`に設定:
+```jsonc
+"d1_databases": [
+  {
+    "binding": "DB",
+    "database_name": "tanstack-start-db",
+    "database_id": "<your-database-id>",  // ここを更新
+    "migrations_dir": "drizzle/migrations"
+  }
+]
 ```
 
-This will create a link that will navigate to the `/about` route.
+3. 本番D1にマイグレーションを適用:
+```bash
+bun run db:migrate:remote
+```
 
-More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
+4. デプロイ:
+```bash
+bun run deploy
+```
 
-### Using A Layout
+### サーバー関数でのDB使用例
 
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you use the `<Outlet />` component.
+```typescript
+import { createServerFn } from '@tanstack/react-start'
+import { env } from 'cloudflare:workers'
+import { createDb, schema } from '@/db'
 
-Here is an example layout that includes a header:
-
-```tsx
-import { Outlet, createRootRoute } from '@tanstack/react-router'
-import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
-
-import { Link } from "@tanstack/react-router";
-
-export const Route = createRootRoute({
-  component: () => (
-    <>
-      <header>
-        <nav>
-          <Link to="/">Home</Link>
-          <Link to="/about">About</Link>
-        </nav>
-      </header>
-      <Outlet />
-      <TanStackRouterDevtools />
-    </>
-  ),
+const getUsers = createServerFn({
+  method: 'GET',
+}).handler(async () => {
+  const db = createDb(env.DB)
+  return await db.select().from(schema.users)
 })
 ```
 
-The `<TanStackRouterDevtools />` component is not required so you can remove it if you don't want it in your layout.
+### Drizzle Studio
 
-More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
+Drizzle Studioを使ってデータベースの内容をGUIで確認・編集できます。
 
-
-## Data Fetching
-
-There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
-
-For example:
-
-```tsx
-const peopleRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/people",
-  loader: async () => {
-    const response = await fetch("https://swapi.dev/api/people");
-    return response.json() as Promise<{
-      results: {
-        name: string;
-      }[];
-    }>;
-  },
-  component: () => {
-    const data = peopleRoute.useLoaderData();
-    return (
-      <ul>
-        {data.results.map((person) => (
-          <li key={person.name}>{person.name}</li>
-        ))}
-      </ul>
-    );
-  },
-});
-```
-
-Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
-
-### React-Query
-
-React-Query is an excellent addition or alternative to route loading and integrating it into you application is a breeze.
-
-First add your dependencies:
-
+**ローカルD1に接続:**
 ```bash
-bun install @tanstack/react-query @tanstack/react-query-devtools
+# 開発サーバーを一度起動してローカルD1を初期化してから実行
+bun run db:studio:local
 ```
 
-Next we'll need to create a query client and provider. We recommend putting those in `main.tsx`.
+**本番D1に接続:**
 
-```tsx
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-
-// ...
-
-const queryClient = new QueryClient();
-
-// ...
-
-if (!rootElement.innerHTML) {
-  const root = ReactDOM.createRoot(rootElement);
-
-  root.render(
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>
-  );
-}
-```
-
-You can also add TanStack Query Devtools to the root route (optional).
-
-```tsx
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-
-const rootRoute = createRootRoute({
-  component: () => (
-    <>
-      <Outlet />
-      <ReactQueryDevtools buttonPosition="top-right" />
-      <TanStackRouterDevtools />
-    </>
-  ),
-});
-```
-
-Now you can use `useQuery` to fetch your data.
-
-```tsx
-import { useQuery } from "@tanstack/react-query";
-
-import "./App.css";
-
-function App() {
-  const { data } = useQuery({
-    queryKey: ["people"],
-    queryFn: () =>
-      fetch("https://swapi.dev/api/people")
-        .then((res) => res.json())
-        .then((data) => data.results as { name: string }[]),
-    initialData: [],
-  });
-
-  return (
-    <div>
-      <ul>
-        {data.map((person) => (
-          <li key={person.name}>{person.name}</li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-export default App;
-```
-
-You can find out everything you need to know on how to use React-Query in the [React-Query documentation](https://tanstack.com/query/latest/docs/framework/react/overview).
-
-## State Management
-
-Another common requirement for React applications is state management. There are many options for state management in React. TanStack Store provides a great starting point for your project.
-
-First you need to add TanStack Store as a dependency:
-
+環境変数を設定してから実行します:
 ```bash
-bun install @tanstack/store
+export CLOUDFLARE_ACCOUNT_ID="your-account-id"
+export CLOUDFLARE_D1_DATABASE_ID="your-database-id"
+export CLOUDFLARE_D1_TOKEN="your-api-token"
+bun run db:studio:remote
 ```
 
-Now let's create a simple counter in the `src/App.tsx` file as a demonstration.
+環境変数の取得方法:
+- `CLOUDFLARE_ACCOUNT_ID`: Cloudflareダッシュボード → Workers & Pages → 右サイドバーの「Account ID」
+- `CLOUDFLARE_D1_DATABASE_ID`: D1データベースページの「Database ID」
+- `CLOUDFLARE_D1_TOKEN`: My Profile → API Tokens → 「D1 Edit」権限を持つトークンを作成
 
-```tsx
-import { useStore } from "@tanstack/react-store";
-import { Store } from "@tanstack/store";
-import "./App.css";
+### 利用可能なスクリプト
 
-const countStore = new Store(0);
-
-function App() {
-  const count = useStore(countStore);
-  return (
-    <div>
-      <button onClick={() => countStore.setState((n) => n + 1)}>
-        Increment - {count}
-      </button>
-    </div>
-  );
-}
-
-export default App;
-```
-
-One of the many nice features of TanStack Store is the ability to derive state from other state. That derived state will update when the base state updates.
-
-Let's check this out by doubling the count using derived state.
-
-```tsx
-import { useStore } from "@tanstack/react-store";
-import { Store, Derived } from "@tanstack/store";
-import "./App.css";
-
-const countStore = new Store(0);
-
-const doubledStore = new Derived({
-  fn: () => countStore.state * 2,
-  deps: [countStore],
-});
-doubledStore.mount();
-
-function App() {
-  const count = useStore(countStore);
-  const doubledCount = useStore(doubledStore);
-
-  return (
-    <div>
-      <button onClick={() => countStore.setState((n) => n + 1)}>
-        Increment - {count}
-      </button>
-      <div>Doubled - {doubledCount}</div>
-    </div>
-  );
-}
-
-export default App;
-```
-
-We use the `Derived` class to create a new store that is derived from another store. The `Derived` class has a `mount` method that will start the derived store updating.
-
-Once we've created the derived store we can use it in the `App` component just like we would any other store using the `useStore` hook.
-
-You can find out everything you need to know on how to use TanStack Store in the [TanStack Store documentation](https://tanstack.com/store/latest).
-
-# Demo files
-
-Files prefixed with `demo` can be safely deleted. They are there to provide a starting point for you to play around with the features you've installed.
-
-# Learn More
-
-You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
+| スクリプト | 説明 |
+|-----------|------|
+| `bun run check` | tsgoで型チェックを実行 |
+| `bun run biome:check` | Biomeでコードのリント・フォーマットを自動修正 |
+| `bun run db:generate` | スキーマからマイグレーションを生成 |
+| `bun run db:migrate:local` | ローカルD1にマイグレーションを適用 |
+| `bun run db:migrate:remote` | 本番D1にマイグレーションを適用 |
+| `bun run db:studio:local` | ローカルD1でDrizzle Studioを起動 |
+| `bun run db:studio:remote` | 本番D1でDrizzle Studioを起動（環境変数必要） |
+| `bun run cf-typegen` | Cloudflare型定義を再生成 |
