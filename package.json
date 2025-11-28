@@ -16,7 +16,9 @@
     "db:migrate:local": "wrangler d1 migrations apply tanstack-start-db --local",
     "db:migrate:remote": "wrangler d1 migrations apply tanstack-start-db --remote",
     "db:studio:local": "LOCAL_DB_PATH=$(find .wrangler/state/v3/d1/miniflare-D1DatabaseObject -type f -name '*.sqlite' -print -quit 2>/dev/null) drizzle-kit studio",
-    "db:studio:remote": "drizzle-kit studio"
+    "db:studio:remote": "drizzle-kit studio",
+    "shadcn:update-all": "bunx --bun shadcn@latest add --all",
+    "sync-docs": "bun run srcipts/sync-docs.ts"
   },
   "dependencies": {
     "@cloudflare/vite-plugin": "^1.13.8",
