@@ -19,7 +19,7 @@
 	 */
 	"d1_databases": [
 		{
-			"binding": "DB",
+			"binding": "tanstack_start_db",
 			"database_name": "tanstack-start-db",
 			"database_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
 			"migrations_dir": "drizzle/migrations"

@@ -59,7 +59,7 @@ bun run db:migrate:local
 
 1. Cloudflare D1データベースを作成:
 ```bash
-wrangler d1 create tanstack-start-db
+bunx wrangler d1 create tanstack-start-db
 ```
 
 2. 出力された`database_id`を`wrangler.jsonc`に設定:
@@ -111,18 +111,30 @@ bun run db:studio:local
 
 **本番D1に接続:**
 
-環境変数を設定してから実行します:
+1. `.env.example`をコピーして`.env`を作成:
 ```bash
-export CLOUDFLARE_ACCOUNT_ID="your-account-id"
-export CLOUDFLARE_D1_DATABASE_ID="your-database-id"
-export CLOUDFLARE_D1_TOKEN="your-api-token"
-bun run db:studio:remote
+cp .env.example .env
 ```
 
-環境変数の取得方法:
-- `CLOUDFLARE_ACCOUNT_ID`: Cloudflareダッシュボード → Workers & Pages → 右サイドバーの「Account ID」
-- `CLOUDFLARE_D1_DATABASE_ID`: D1データベースページの「Database ID」
-- `CLOUDFLARE_D1_TOKEN`: My Profile → API Tokens → 「D1 Edit」権限を持つトークンを作成
+2. `.env`ファイルに必要な値を設定:
+```bash
+CLOUDFLARE_ACCOUNT_ID=your-account-id
+CLOUDFLARE_D1_DATABASE_ID=your-database-id
+CLOUDFLARE_D1_TOKEN=your-api-token
+```
+
+3. 環境変数を読み込んでDrizzle Studioを起動:
+```bash
+source .env && bun run db:studio:remote
+```
+
+**環境変数の取得方法:**
+
+| 環境変数 | 取得方法 |
+|---------|---------|
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflareダッシュボード → Workers & Pages → 右サイドバーの「Account ID」 |
+| `CLOUDFLARE_D1_DATABASE_ID` | Cloudflareダッシュボード → D1 → 対象データベース → 「Database ID」（`wrangler.jsonc`の`database_id`と同じ値） |
+| `CLOUDFLARE_D1_TOKEN` | Cloudflareダッシュボード → My Profile → API Tokens → Create Token → 「D1 Edit」権限を付与 |
 
 ### 利用可能なスクリプト
 
