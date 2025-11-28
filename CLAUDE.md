@@ -17,6 +17,15 @@ bun run biome:check
 # テスト実行
 bun run test
 
+# テスト（ウォッチモード）
+bun run test:watch
+
+# テスト（UIモード）
+bun run test:ui
+
+# テスト（カバレッジ）
+bun run test:coverage
+
 # ビルド
 bun run build
 
@@ -51,6 +60,7 @@ source .env && bun run db:studio:remote
 - **データベース**: Cloudflare D1 + Drizzle ORM
 - **UI**: Shadcn UIコンポーネント
 - **スタイリング**: Tailwind CSS v4
+- **テスト**: Vitest + React Testing Library
 - **ホスティング**: Cloudflare Workers
 
 ### ディレクトリ構成
@@ -97,3 +107,5 @@ const getUsers = createServerFn({
 - 本番デプロイ前に`wrangler.jsonc`の`database_id`を実際の値に更新
 - Cloudflare型定義の再生成: `bun run cf-typegen`
 - これはテンプレートリポジトリです。プロジェクトに合わせて適宜修正してください。
+- 何らかの変更を行った場合、必要なドキュメントを`.claude/command/update-docs.md`に従って更新してください。
+- 新機能を追加した場合、`docs/testing/philosophy.md`に従って必要なテストを追加してください。

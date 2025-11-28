@@ -9,7 +9,8 @@
         "./worker-configuration.d.ts",
         "node",
         "vite/client",
-        "@cloudflare/workers-types/experimental"
+        "@cloudflare/workers-types/experimental",
+        "@testing-library/jest-dom"
     ],
 
     /* Bundler mode */
